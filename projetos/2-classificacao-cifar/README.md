@@ -96,28 +96,49 @@ projetos/2-classificacao-cifar/
 
 ## 📝 Relatório do Candidato
 
-👤 **Nome Completo:**
+👤 **Letícia Giulia Ribeiro Gomes**
 
-### 1️⃣ Resumo da Arquitetura do Modelo
+### 1️⃣ Resumo da Arquitetura do Modelos
 
-Descreva a arquitetura da CNN implementada em `train_model.py` e a estratégia de data augmentation utilizada.
+Para resolver o desafio do CIFAR-10 sem travar a CPU durante o treino, montei uma CNN bem simples e direta usando o Sequential do Keras, dividida em três partes principais:
+
+. Data Augmentation: Logo no começo do modelo, coloquei camadas de RandomFlip("horizontal"), RandomRotation(0.1) e RandomZoom(0.1). A ideia foi fazer com que cada época de treino visse as imagens com pequenas variações, o que ajuda muito a evitar overfitting sem precisar gerar arquivos extras no disco.
+
+. Blocos Convolucionais: Criei 3 blocos sequenciais para extração de características. Cada um tem:
+
+Uma camada Conv2D (32, 64 e 128 filtros, respectivamente) com ativação ReLU.
+BatchNormalization para ajudar o treino a convergir mais rápido.
+MaxPooling2D para diminuir a dimensão da imagem e focar só no que importa.
+
+. Camadas Finais: No final, usei Flatten para transformar tudo em um vetor, adicionei Dropout (0.4 e 0.3) pra dar mais uma segurada na memorização, uma camada Dense de 128 neurônios e a camada de saída com Dense(10) e Softmax para dar as probabilidades de cada classe.
 
 ### 2️⃣ Bibliotecas Utilizadas
 
-Liste as principais bibliotecas utilizadas, preferencialmente com suas versões.
+. TensorFlow / Keras: 2.15.0 (ou superior) — Usei para carregar o dataset, construir e treinar a rede, aplicar os callbacks e converter o modelo final.
+. NumPy: 1.26.4 — Usei na parte de inferência para formatar as matrizes das imagens e processar os resultados.
 
 ### 3️⃣ Técnica de Otimização do Modelo
 
-Explique qual técnica foi utilizada para otimizar o modelo em `optimize_model.py`.
+No script optimize_model.py, apliquei a técnica de Dynamic Range Quantization na hora de converter o modelo com o TFLiteConverter, o que ela faz é pegar os pesos da rede que estavam em precisão alta (float32) e transformar em inteiros de 8 bits (int8). O ganho é enorme: o arquivo fica quase 4 vezes menor e passa a rodar muito mais rápido em dispositivos de borda (Edge AI), como celulares ou robôs, mantendo praticamente a mesma acurácia.
 
 ### 4️⃣ Resultados Obtidos
 
-Informe a acurácia de validação obtida e o tamanho dos arquivos `model.h5` e `model.tflite`.
-
+Acurácia Final de Validação: aproximadamente 72.50 % (pode variar um pouco a cada treino por conta do ambiente).
+Tamanho do model.h5: aproximadamente 2.1 MB 
+Tamanho do model.tflite: aproximadamente 580 KB (ficou cerca de 72% menor)
 ### 5️⃣ Comentários Adicionais (Opcional)
 
-Dificuldades encontradas, decisões técnicas importantes, limitações do modelo, aprendizados durante o desafio.
-
+A principal dificuldade foi o CIFAR-10, que é bem mais chato que o MNIST porque as imagens são coloridas e têm fundos muito ruidosos, então foi mais demorado tentar ajustar o tamanho da rede para ter um resultado bacana de acurácia sem fazer a CPU sofrer para treinar.
+Decisões de Código: Optar por colocar a Data Augmentation diretamente dentro da estrutura do modelo foi uma boa escolha, porque deixou o código limpo e dispensou a necessidade de criar pipelines manuais mais complexos.
 ### 6️⃣ Exemplo de Inferência
 
-Cole a saída do terminal ao rodar `run_inference.py` (predito vs. real para as 5+ amostras), e comente brevemente se houve algum caso interessante (acerto ou erro) entre as amostras testadas.
+--- Resultados da Inferência (Edge AI) ---
+
+Amostra 1: Predito = gato       | Real = gato
+Amostra 2: Predito = navio      | Real = navio
+Amostra 3: Predito = navio      | Real = navio
+Amostra 4: Predito = avião      | Real = avião
+Amostra 5: Predito = sapo       | Real = sapo
+
+Nas 5 amostras testadas, o modelo otimizado .tflite acertou todas as previsões. Objetos com formatos bem marcados e fundos limpos (como navios no mar ou aviões no céu) foram identificados de primeira, mostrando que a conversão para 8 bits não afetou a capacidade do modelo em identificar essas classes.
+
