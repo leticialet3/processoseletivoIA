@@ -132,7 +132,7 @@ A principal dificuldade foi o CIFAR-10, que é bem mais chato que o MNIST porque
 Decisões de Código: Optar por colocar a Data Augmentation diretamente dentro da estrutura do modelo foi uma boa escolha, porque deixou o código limpo e dispensou a necessidade de criar pipelines manuais mais complexos.
 ### 6️⃣ Exemplo de Inferência
 
---- Resultados da Inferência (Edge AI) ---
+Resultados da Inferência (Edge AI) 
 
 Amostra 1: Predito = gato       | Real = gato
 Amostra 2: Predito = navio      | Real = navio
