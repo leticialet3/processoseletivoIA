@@ -10,13 +10,13 @@ def main():
     x_train = x_train.astype("float32") / 255.0
     x_test = x_test.astype("float32") / 255.0
 
-    # 2. Validação
+    # 2. Split de Validação
     x_val, y_val = x_train[-5000:], y_train[-5000:]
     x_train, y_train = x_train[:-5000], y_train[:-5000]
 
-    # 3. Construção do Modelo 
+    # 3. Construção do Modelo
     model = keras.Sequential([
-        # Data Augmentation embutida no modelo
+        # Data Augmentation
         layers.RandomFlip("horizontal", input_shape=(32, 32, 3)),
         layers.RandomRotation(0.1),
         layers.RandomZoom(0.1),
@@ -36,7 +36,7 @@ def main():
         layers.BatchNormalization(),
         layers.MaxPooling2D((2, 2)),
 
-        # Cabeçote do Modelo
+        # Cabeçote
         layers.Flatten(),
         layers.Dropout(0.4),
         layers.Dense(128, activation="relu"),
@@ -50,15 +50,12 @@ def main():
         metrics=["accuracy"]
     )
 
-    # 4. Callbacks 
-    callbacks = [
-        keras.callbacks.EarlyStopping(
-            monitor="val_loss", 
-            patience=5, 
-            restore_best_weights=True
-        ),
-        keras.callbacks.ModelCheckpoint("model.h5", save_best_only=True)
-    ]
+    # 4. Early Stopping
+    early_stopping = keras.callbacks.EarlyStopping(
+        monitor="val_loss", 
+        patience=5, 
+        restore_best_weights=True
+    )
 
     # 5. Treinamento
     print("Iniciando treinamento...")
@@ -67,12 +64,17 @@ def main():
         validation_data=(x_val, y_val),
         epochs=25,
         batch_size=64,
-        callbacks=callbacks
+        callbacks=[early_stopping]
     )
 
-    # 6. Exibição da Acurácia de Validação Final
+    # 6. Exibição da Acurácia de Validação
     val_loss, val_acc = model.evaluate(x_val, y_val, verbose=0)
     print(f"\n---> Acurácia Final de Validação: {val_acc * 100:.2f}% <---")
+
+    # 7. Salvamento do modelo no formato compatível HDF5
+    # Forçamos o save_format 'h5' para garantir compatibilidade total na deserialização no CI
+    tf.keras.models.save_model(model, "model.h5", save_format="h5")
+    print("Modelo salvo com sucesso em 'model.h5'.")
 
 if __name__ == "__main__":
     main()
